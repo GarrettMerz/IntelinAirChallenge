@@ -26,24 +26,26 @@ from models import *
 from losses import *
 from get_data import *
 
+#Get the training and validation set
 df = make_df()
 XY_train,XY_val,XY_test = make_traintest(df)
 train_generator = df_to_generator(XY_train,do_augments=True)
 val_generator = df_to_generator(XY_val,do_augments=False)
-train_steps = get_gen_size(XY_train,do_augments=True)
-val_steps = get_gen_size(XY_val,do_augments=False)
+train_steps = len(XY_train)
+val_steps = len(XY_val)
 
 # Learning rate decay function
 lr_callback = tf.keras.callbacks.LearningRateScheduler(lambda step: lrfn(step))
+opt_adam = optimizers.Adam()
 # Model checkpoint, saves weights if val loss reduces
 checkpoint = tf.keras.callbacks.ModelCheckpoint('models/model.h5', 'val_loss', save_best_only=True, verbose=1)
 
-opt_adam = optimizers.Adam()
+#load and compile model
 model = FullModel()
 model.compile(optimizer = opt_adam, loss = hybrid_loss, metrics = [tf.keras.metrics.MeanIoU(num_classes=2)])
 model.summary()
 
-
+#fit model to train set, validate on validation set. Save best model after 5 epochs
 history = model.fit(train_generator, validation_data=val_generator, 
                     steps_per_epoch=train_steps, validation_steps=val_steps, 
                     epochs = 5, verbose=1, callbacks=[checkpoint, lr_callback])

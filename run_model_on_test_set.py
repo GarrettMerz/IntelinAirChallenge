@@ -27,12 +27,11 @@ from models import *
 from losses import *
 from get_data import *
 
+#Get the test set
 df= make_df()
 XY_train,XY_val,XY_test=make_traintest(df)
-print(XY_test.iloc[0,0])
-
 test_generator = df_to_generator(XY_test, do_augments=False)
-test_size = get_gen_size(XY_test, do_augments=False)
+test_size = len(XY_test)
 test_iter = iter(test_generator)
 
 # Load the model
@@ -42,7 +41,9 @@ model = load_model(
     compile=True
 )
 
+#Get average loss and IOU for full test set
 loss = model.evaluate(test_generator, steps=test_size, verbose = 1)
+#Plot output mask for each instance in test set
 
 for i in range(test_size):
     images, masks = next(test_iter)

@@ -27,9 +27,10 @@ from models import *
 from losses import *
 from get_data import *
 
+#Get the data to inferece
 inf_df = make_df(inference_dir)
 inf_generator = df_to_generator(inf_df, do_augments=False)
-inf_size = get_gen_size(inf_df)
+inf_size = len(inf_df)
 inf_iter = iter(inf_generator)
 
 # Load the model

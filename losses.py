@@ -46,7 +46,7 @@ def tversky_loss(targets, inputs, alpha=1, beta=1, numLabels=2):
 
     
 def focal_loss(targets, inputs, numLabels=2):
-
+    #flatten label and prediction tensors
     inputs = K.flatten(inputs)
     targets = K.flatten(targets)
     inputs2 = K.flatten(1-inputs)
@@ -66,11 +66,13 @@ def focal_loss(targets, inputs, numLabels=2):
     return focal_loss
             
 def hybrid_loss(targets, inputs, _lambda_ = 1):
+    #Get both losses, sum with lambda factor
     tversky= tversky_loss(targets, inputs)
     focal=focal_loss(targets, inputs)    
     result = tversky + _lambda_ * focal
     return result
 
 def total_loss(y_true, y_pred):
+    #Average loss over all three timestep predictions, to penalize predictions that just focus on the final-stage nutrient deficiency mask
     sumval = hybrid_loss(y_true, y_pred)
     return (1/3)*sumval

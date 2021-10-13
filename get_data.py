@@ -28,6 +28,7 @@ from models import *
 from get_data import *
 
 def make_df(in_dir = src_dir):
+    #Function to make a pandas dataframe from a directory containing subdirectories of images
     input_img0_names = []
     input_img1_names = []
     input_img2_names = []
@@ -46,6 +47,7 @@ def make_df(in_dir = src_dir):
     return df
 
 def make_traintest(df):
+    #Function to split a dataframe containing information about images into train, val and test sets
     XY_train,XY_valtest = train_test_split(df, train_size=0.8, random_state=0)
     XY_val, XY_test = train_test_split(XY_valtest, train_size=0.5, random_state=0)
     XY_train.reset_index(drop=True, inplace=True)
@@ -55,14 +57,14 @@ def make_traintest(df):
     return XY_train,XY_val,XY_test
 
 def myGenerator(generator1,generator2,generator3,boundgenerator,outgenerator):
+    #Custom generator function. This returns the three input images, the boundary mask (reduced to one channel) and the nutrient mask.
         while True:
             for x0,x1,x2,bound,y1 in zip(generator1,generator2,generator3,boundgenerator,outgenerator):
-                #print(y1[:,:,:,2].shape)
                 yield ([x0,x1,x2,bound[:,:,:,2]], y1)
 
 
 def df_to_generator(XY_df, do_augments = False):
-
+    #Flow from a specified dataframe with a myGenerator.
     image0_datagen = ImageDataGenerator(rescale=1./255.)
     image1_datagen = ImageDataGenerator(rescale=1./255.)
     image2_datagen = ImageDataGenerator(rescale=1./255.)
@@ -126,19 +128,3 @@ def df_to_generator(XY_df, do_augments = False):
                                   image2_generator, boundary_generator, mask_generator)
 
     return df_generator
-
-def get_gen_size(XY_df,do_augments=False):
-    image0_datagen = ImageDataGenerator(rescale=1./255.)
-    seed = 1
-
-    image0_generator = image0_datagen.flow_from_dataframe(
-        dataframe=XY_df,
-        x_col="image_0",
-        class_mode=None,
-        horizontal_flip=do_augments,
-        vertical_flip=do_augments,
-        target_size = (WIDTH, HEIGHT),
-        batch_size = BATCH_SIZE,
-        seed=seed)
-
-    return(len(image0_generator))

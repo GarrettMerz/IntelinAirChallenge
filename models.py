@@ -28,16 +28,17 @@ from models import *
 from get_data import *
 
 
-#Given that I'm training three U-Nets in parallel, I can only afford a few filters for each layer.
 
 def UNet(image_input, boundary_input):
+    #The U-Net block. Given that I'm training three U-Nets in parallel, I can only afford a few filters for each layer.
 
+    #Mask inputs with boundary mask
     Mask_in0 = Multiply()([boundary_input,image_input[:,:,:,0]])
     Mask_in1 = Multiply()([boundary_input,image_input[:,:,:,1]])
     Mask_in2 = Multiply()([boundary_input,image_input[:,:,:,2]])
     masked_input = Concatenate()([Mask_in0,Mask_in1,Mask_in2])
+   
     #Encoder layers
-
     c1 = Conv2D(8, kernel_size=(3,3), kernel_initializer='he_normal', padding = 'same')(masked_input)
     c1 = ELU()(c1)
     c1 = BatchNormalization()(c1)
@@ -125,12 +126,15 @@ def UNet(image_input, boundary_input):
     c9 = BatchNormalization()(c9)
 
     mask_out = Conv2D(1, (1,1), kernel_initializer='he_normal', padding = 'same', activation = 'sigmoid')(c9)
+
+    #Apply boundary mask again to output
     multmask = Multiply()([mask_out, boundary_input])
 
     return multmask
 
 def ConvLSTM(movieIn, boundary_input):
 
+    #Convolutional LSTM module.
     x = ConvLSTM2D(
     filters=16,
     kernel_size=(5, 5),
@@ -168,6 +172,7 @@ def ConvLSTM(movieIn, boundary_input):
     padding="same"
     )(x)
     
+    #Mask the output at each timestep, return as a three-channel image
     P0 = Multiply()([boundary_input,lastmask[:,0,:,:,:]])
     P1 = Multiply()([boundary_input,lastmask[:,1,:,:,:]])
     P2 = Multiply()([boundary_input,lastmask[:,2,:,:,:]])
@@ -177,6 +182,7 @@ def ConvLSTM(movieIn, boundary_input):
     return outmask
 
 def LastOnlyModel():
+    #Dummy model to only use the last timestep (not employed)
 
     image0 = Input(shape=(HEIGHT, WIDTH, CHANNELS), name = 'img0_input')
     image1 = Input(shape=(HEIGHT, WIDTH, CHANNELS), name = 'img1_input')
@@ -189,6 +195,7 @@ def LastOnlyModel():
     return model
 
 def FullModel():
+    #The full model. Three U-Nets, one Concatenate, and a ConvLSTM.
 
     image0 = Input(shape=(HEIGHT, WIDTH, CHANNELS), name = 'img0_input')
     image1 = Input(shape=(HEIGHT, WIDTH, CHANNELS), name = 'img1_input')
@@ -199,13 +206,12 @@ def FullModel():
     X2= UNet(image1, boundary)
     X3= UNet(image2, boundary)
 
-    
+    #Arrange U-Net outputs along a time dimension
     X1 = tf.keras.backend.expand_dims(X1,axis=1)
     X2 = tf.keras.backend.expand_dims(X2,axis=1)
     X3 = tf.keras.backend.expand_dims(X3,axis=1)
     movie=Concatenate(axis=1)([X1, X2, X3])
 
-    
     outmask = ConvLSTM(movie, boundary)
     print(outmask.shape)                   
     model = Model(inputs = [image0,image1,image2, boundary], outputs = outmask, name='SemanticSegModel')
@@ -213,6 +219,7 @@ def FullModel():
     return model
 
 def lrfn(epoch):
+    #learning rate decay function
     if epoch > 15:
         return 2e-6
     elif epoch > 25:
