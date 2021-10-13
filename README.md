@@ -19,6 +19,9 @@ This has the effect of telling the model to ignore anything outside the boundary
 (There may be a better way to do this, but this one works for now!)
 In test where I didn't do this, a lot of the model's energy went toward learning the field boundaries, which isn't useful for this task.
 
+We can see that the model doesn't perform as well as it ought to: it's kind of able to highlight horizontal and vertical strips of field which might be more deficient than others,
+but it tends to produce the highest scores near edges and boundaries, and IOU is relatively flat through time. This is a big drawback to not having enough filters!
+
 TO INSTALL AND RUN:
 
 First, download the data from https://registry.opendata.aws/intelinair_longitudinal_nutrient_deficiency/.

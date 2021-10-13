@@ -49,7 +49,7 @@ def train_model():
     #fit model to train set, validate on validation set. Save best model after 5 epochs
     history = model.fit(train_generator, validation_data=val_generator, 
                         steps_per_epoch=train_steps, validation_steps=val_steps, 
-                        epochs = 5, verbose=1, callbacks=[checkpoint, lr_callback])
+                        epochs = 20, verbose=1, callbacks=[checkpoint, lr_callback])
 
 
     #Plot loss and IOU curves
